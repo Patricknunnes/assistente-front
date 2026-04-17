@@ -1,0 +1,114 @@
+@import url('https://fonts.googleapis.com/css2?family=MedievalSharp&family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+  /* Core palette - medieval/earth tones */
+  --color-bg-primary: #0f0e0c;
+  --color-bg-secondary: #1a1814;
+  --color-bg-card: #221f1a;
+  --color-bg-card-hover: #2a2620;
+  --color-bg-input: #1a1814;
+  --color-border: #3d3629;
+  --color-border-focus: #8b6914;
+
+  /* Accent colors */
+  --color-gold: #d4a017;
+  --color-gold-light: #f0c040;
+  --color-gold-dark: #8b6914;
+  --color-red: #c0392b;
+  --color-green: #27ae60;
+  --color-blue: #2980b9;
+
+  /* Text */
+  --color-text-primary: #e8dcc8;
+  --color-text-secondary: #9c8e78;
+  --color-text-muted: #6b5f4f;
+
+  /* Defense bar colors */
+  --color-infantry: #e74c3c;
+  --color-cavalry: #3498db;
+  --color-archer: #2ecc71;
+
+  /* Shadows */
+  --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.4);
+  --shadow-glow: 0 0 20px rgba(212, 160, 23, 0.15);
+
+  /* Fonts */
+  --font-display: 'MedievalSharp', cursive;
+  --font-body: 'Inter', system-ui, sans-serif;
+
+  /* Borders */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-body);
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  min-height: 100vh;
+  line-height: 1.6;
+}
+
+/* Background texture */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 20% 50%, rgba(212, 160, 23, 0.03) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(139, 105, 20, 0.04) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+#root {
+  position: relative;
+  z-index: 1;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-gold-dark);
+}
+
+/* Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}

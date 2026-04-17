@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm create *)",
+      "Bash(npx *)",
+      "Bash(cp -r tw-front/* .)",
+      "Bash(cp tw-front/.gitignore .)",
+      "Bash(rm -rf tw-front)",
+      "Bash(npm install *)",
+      "Bash(curl -s http://localhost:5173)"
+    ]
+  }
+}

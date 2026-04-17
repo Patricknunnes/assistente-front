@@ -1,0 +1,46 @@
+.header {
+  background: linear-gradient(180deg, var(--color-bg-secondary), var(--color-bg-primary));
+  border-bottom: 2px solid var(--color-border);
+  padding: 1.25rem 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(8px);
+}
+
+.inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.icon {
+  font-size: 2.5rem;
+  color: var(--color-gold);
+  filter: drop-shadow(0 0 8px rgba(212, 160, 23, 0.4));
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  color: var(--color-gold);
+  letter-spacing: 1px;
+  line-height: 1.2;
+}
+
+.subtitle {
+  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  font-weight: 300;
+}
