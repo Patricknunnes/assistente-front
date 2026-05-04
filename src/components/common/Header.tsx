@@ -1,7 +1,17 @@
+import type { MouseEvent } from "react";
 import styles from "./Header.module.css";
 
-export function Header() {
-  const pathname = window.location.pathname;
+interface HeaderProps {
+  pathname: string;
+  onNavigate: (path: string) => void;
+}
+
+export function Header({ pathname, onNavigate }: HeaderProps) {
+  const handleNavigate =
+    (path: string) => (event: MouseEvent<HTMLAnchorElement>) => {
+      event.preventDefault();
+      onNavigate(path);
+    };
 
   return (
     <header className={styles.header}>
@@ -18,6 +28,7 @@ export function Header() {
           <a
             className={pathname === "/" ? styles.navLinkActive : styles.navLink}
             href="/"
+            onClick={handleNavigate("/")}
           >
             Cards
           </a>
@@ -26,6 +37,7 @@ export function Header() {
               pathname === "/simple-list" ? styles.navLinkActive : styles.navLink
             }
             href="/simple-list"
+            onClick={handleNavigate("/simple-list")}
           >
             Lista Simples
           </a>

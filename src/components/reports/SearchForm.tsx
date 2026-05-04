@@ -1,5 +1,4 @@
 import type { FormEvent } from "react";
-import { useState  } from "react";
 import type { ReportSearchParams } from "../../types/report";
 import { toDatetimeLocal } from "../../utils/format";
 import styles from "./SearchForm.module.css";
@@ -7,19 +6,30 @@ import styles from "./SearchForm.module.css";
 interface SearchFormProps {
   onSearch: (params: ReportSearchParams) => void;
   loading: boolean;
+  playerName: string;
+  limit: number;
+  from: string;
+  onPlayerNameChange: (value: string) => void;
+  onLimitChange: (value: number) => void;
+  onFromChange: (value: string) => void;
 }
 
-function getDefaultFrom(): string {
+export function getDefaultFrom(): string {
   const date = new Date();
   date.setDate(date.getDate() - 7);
   return toDatetimeLocal(date);
 }
 
-export function SearchForm({ onSearch, loading }: SearchFormProps) {
-  const [playerName, setPlayerName] = useState("otavio10ta");
-  const [limit, setLimit] = useState(10);
-  const [from, setFrom] = useState(getDefaultFrom);
-
+export function SearchForm({
+  onSearch,
+  loading,
+  playerName,
+  limit,
+  from,
+  onPlayerNameChange,
+  onLimitChange,
+  onFromChange,
+}: SearchFormProps) {
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     onSearch({ playerName, limit, from });
@@ -37,7 +47,7 @@ export function SearchForm({ onSearch, loading }: SearchFormProps) {
             className={styles.input}
             type="text"
             value={playerName}
-            onChange={(e) => setPlayerName(e.target.value)}
+            onChange={(e) => onPlayerNameChange(e.target.value)}
             placeholder="Ex: otavio10ta"
             required
           />
@@ -54,7 +64,7 @@ export function SearchForm({ onSearch, loading }: SearchFormProps) {
             min={1}
             max={100}
             value={limit}
-            onChange={(e) => setLimit(Number(e.target.value))}
+            onChange={(e) => onLimitChange(Number(e.target.value))}
           />
         </div>
 
@@ -67,7 +77,7 @@ export function SearchForm({ onSearch, loading }: SearchFormProps) {
             className={styles.input}
             type="datetime-local"
             value={from}
-            onChange={(e) => setFrom(e.target.value)}
+            onChange={(e) => onFromChange(e.target.value)}
           />
         </div>
       </div>
