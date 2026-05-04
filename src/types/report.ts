@@ -1,24 +1,26 @@
-export interface Units {
-  AXE: number;
-  CATAPULT: number;
-  HEAVY: number;
-  KNIGHT: number;
-  LIGHT: number;
-  MILITIA: number;
-  RAM: number;
-  SNOB: number;
-  SPEAR: number;
-  SPY: number;
-  SWORD: number;
-}
+export type UnitType =
+  | "AXE"
+  | "CATAPULT"
+  | "HEAVY"
+  | "KNIGHT"
+  | "LIGHT"
+  | "MILITIA"
+  | "RAM"
+  | "SNOB"
+  | "SPEAR"
+  | "SPY"
+  | "SWORD";
 
-export type UnitType = keyof Units;
+export type Units = Partial<Record<UnitType, number>>;
 
 export interface VillageReport {
   village: string;
+  villageId?: number;
   player: string;
+  villageUrl?: string;
   reportDate: string;
   wallLevel: number | null;
+  towerLevel?: number | null;
   infantryDefenseScore: number;
   cavalryDefenseScore: number;
   archerDefenseScore: number;

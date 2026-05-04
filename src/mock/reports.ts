@@ -3,9 +3,13 @@ import type { VillageReport } from "../types/report";
 export const mockReports: VillageReport[] = [
   {
     village: "493|464",
+    villageId: 6493464,
     player: "QUICO BADERNEIRO",
+    villageUrl:
+      "https://br138.tribalwars.com.br/game.php?screen=info_village&id=6493464#493;464",
     reportDate: "2026-04-16T14:06:31",
     wallLevel: 20,
+    towerLevel: 20,
     infantryDefenseScore: 209252.16,
     cavalryDefenseScore: 246358.98,
     archerDefenseScore: 215669.16,
@@ -26,9 +30,13 @@ export const mockReports: VillageReport[] = [
   },
   {
     village: "485|449",
+    villageId: 6485449,
     player: "QUICO BADERNEIRO",
+    villageUrl:
+      "https://br138.tribalwars.com.br/game.php?screen=info_village&id=6485449#485;449",
     reportDate: "2026-04-16T16:13:23",
     wallLevel: null,
+    towerLevel: null,
     infantryDefenseScore: 1278739,
     cavalryDefenseScore: 1068367,
     archerDefenseScore: 1193814,
@@ -49,9 +57,13 @@ export const mockReports: VillageReport[] = [
   },
   {
     village: "485|458",
+    villageId: 6485458,
     player: "QUICO BADERNEIRO",
+    villageUrl:
+      "https://br138.tribalwars.com.br/game.php?screen=info_village&id=6485458#485;458",
     reportDate: "2026-04-16T13:18:17",
     wallLevel: null,
+    towerLevel: null,
     infantryDefenseScore: 1677033,
     cavalryDefenseScore: 1259334,
     archerDefenseScore: 1542588,
@@ -72,9 +84,13 @@ export const mockReports: VillageReport[] = [
   },
   {
     village: "485|446",
+    villageId: 6485446,
     player: "QUICO BADERNEIRO",
+    villageUrl:
+      "https://br138.tribalwars.com.br/game.php?screen=info_village&id=6485446#485;446",
     reportDate: "2026-04-16T13:51:12",
     wallLevel: null,
+    towerLevel: null,
     infantryDefenseScore: 3072775,
     cavalryDefenseScore: 1885810,
     archerDefenseScore: 2812660,
@@ -95,9 +111,13 @@ export const mockReports: VillageReport[] = [
   },
   {
     village: "486|449",
+    villageId: 6486449,
     player: "QUICO BADERNEIRO",
+    villageUrl:
+      "https://br138.tribalwars.com.br/game.php?screen=info_village&id=6486449#486;449",
     reportDate: "2026-04-16T14:59:53",
     wallLevel: null,
+    towerLevel: null,
     infantryDefenseScore: 4438385,
     cavalryDefenseScore: 3456890,
     archerDefenseScore: 4071280,
@@ -118,9 +138,13 @@ export const mockReports: VillageReport[] = [
   },
   {
     village: "489|442",
+    villageId: 6489442,
     player: "QUICO BADERNEIRO",
+    villageUrl:
+      "https://br138.tribalwars.com.br/game.php?screen=info_village&id=6489442#489;442",
     reportDate: "2026-04-16T13:32:51",
     wallLevel: 20,
+    towerLevel: 20,
     infantryDefenseScore: 5607410.58,
     cavalryDefenseScore: 4207765.59,
     archerDefenseScore: 5154453.18,
@@ -141,9 +165,13 @@ export const mockReports: VillageReport[] = [
   },
   {
     village: "486|442",
+    villageId: 6486442,
     player: "QUICO BADERNEIRO",
+    villageUrl:
+      "https://br138.tribalwars.com.br/game.php?screen=info_village&id=6486442#486;442",
     reportDate: "2026-04-16T15:00:07",
     wallLevel: null,
+    towerLevel: null,
     infantryDefenseScore: 6300337,
     cavalryDefenseScore: 4252286,
     archerDefenseScore: 5762492,

@@ -15,6 +15,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 1rem;
 }
 
 .brand {
@@ -43,4 +44,50 @@
   text-transform: uppercase;
   letter-spacing: 3px;
   font-weight: 300;
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.navLink,
+.navLinkActive {
+  text-decoration: none;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  padding: 0.5rem 0.9rem;
+  border-radius: 999px;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+  border: 1px solid transparent;
+}
+
+.navLink {
+  color: var(--color-text-secondary);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.navLink:hover {
+  color: var(--color-text-primary);
+  border-color: var(--color-border);
+}
+
+.navLinkActive {
+  color: var(--color-gold-light);
+  background: rgba(212, 160, 23, 0.12);
+  border-color: rgba(212, 160, 23, 0.24);
+}
+
+@media (max-width: 768px) {
+  .inner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .nav {
+    width: 100%;
+    flex-wrap: wrap;
+  }
 }

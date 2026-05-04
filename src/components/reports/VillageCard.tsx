@@ -1,6 +1,6 @@
 import type { VillageReport } from "../../types/report";
 import { formatDate, formatNumber } from "../../utils/format";
-import { UNIT_INFO, UNIT_ORDER } from "../../utils/units";
+import { getUnitIconUrl, UNIT_INFO, UNIT_ORDER } from "../../utils/units";
 import { DefenseBar } from "./DefenseBar";
 import styles from "./VillageCard.module.css";
 
@@ -18,7 +18,7 @@ function getThreatLevel(total: number): { label: string; className: string } {
 
 export function VillageCard({ report, rank }: VillageCardProps) {
   const threat = getThreatLevel(report.totalDefenseScore);
-  const activeUnits = UNIT_ORDER.filter((u) => report.units[u] > 0);
+  const activeUnits = UNIT_ORDER.filter((unit) => (report.units[unit] ?? 0) > 0);
 
   return (
     <div className={styles.card} style={{ animationDelay: `${rank * 0.08}s` }}>
@@ -26,7 +26,19 @@ export function VillageCard({ report, rank }: VillageCardProps) {
         <div className={styles.headerLeft}>
           <span className={styles.rank}>#{rank}</span>
           <div>
-            <div className={styles.village}>{report.village}</div>
+            {report.villageUrl ? (
+              <a
+                className={styles.villageLink}
+                href={report.villageUrl}
+                target="_blank"
+                rel="noreferrer"
+                title="Abrir aldeia no Tribal Wars"
+              >
+                <div className={styles.village}>{report.village}</div>
+              </a>
+            ) : (
+              <div className={styles.village}>{report.village}</div>
+            )}
             <div className={styles.player}>{report.player}</div>
           </div>
         </div>
@@ -35,8 +47,13 @@ export function VillageCard({ report, rank }: VillageCardProps) {
             {threat.label}
           </span>
           {report.wallLevel !== null && (
-            <span className={styles.wall} title="Nível da Muralha">
+            <span className={styles.structure} title="Nivel da Muralha">
               &#127984; {report.wallLevel}
+            </span>
+          )}
+          {report.towerLevel !== null && report.towerLevel !== undefined && (
+            <span className={styles.structure} title="Nivel da Torre">
+              &#128508; {report.towerLevel}
             </span>
           )}
         </div>
@@ -77,11 +94,14 @@ export function VillageCard({ report, rank }: VillageCardProps) {
           <div className={styles.unitsGrid}>
             {activeUnits.map((unit) => (
               <div key={unit} className={styles.unitItem}>
-                <span className={styles.unitEmoji}>
-                  {UNIT_INFO[unit].emoji}
-                </span>
+                <img
+                  className={styles.unitIcon}
+                  src={getUnitIconUrl(unit)}
+                  alt={UNIT_INFO[unit].label}
+                  loading="lazy"
+                />
                 <span className={styles.unitCount}>
-                  {formatNumber(report.units[unit])}
+                  {formatNumber(report.units[unit] ?? 0)}
                 </span>
                 <span className={styles.unitName}>
                   {UNIT_INFO[unit].label}

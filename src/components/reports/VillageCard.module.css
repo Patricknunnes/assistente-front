@@ -44,6 +44,15 @@
   letter-spacing: 1px;
 }
 
+.villageLink {
+  color: inherit;
+  text-decoration: none;
+}
+
+.villageLink:hover .village {
+  color: var(--color-gold-light);
+}
+
 .player {
   font-size: 0.8rem;
   color: var(--color-text-secondary);
@@ -90,7 +99,7 @@
   border: 1px solid rgba(155, 89, 182, 0.3);
 }
 
-.wall {
+.structure {
   font-size: 0.85rem;
   color: var(--color-text-secondary);
   background: var(--color-bg-input);
@@ -187,8 +196,11 @@
   border-color: var(--color-gold-dark);
 }
 
-.unitEmoji {
-  font-size: 1.2rem;
+.unitIcon {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  image-rendering: -webkit-optimize-contrast;
 }
 
 .unitCount {

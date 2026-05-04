@@ -1,4 +1,5 @@
-import { FormEvent, useState } from "react";
+import type { FormEvent } from "react";
+import { useState  } from "react";
 import type { ReportSearchParams } from "../../types/report";
 import { toDatetimeLocal } from "../../utils/format";
 import styles from "./SearchForm.module.css";
