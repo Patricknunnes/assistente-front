@@ -50,7 +50,7 @@ export function DefensiveList({
   return (
     <div className={styles.page}>
       <div className={styles.intro}>
-        <h2 className={styles.title}>Aldeias Para Copiar no Mapa</h2>
+        <h2 className={styles.title}>Aldeias Ofensivas Descobertas Via Notas</h2>
         <p className={styles.description}>
           Busca opcional por player e data, com a saida pronta para copiar e colar.
         </p>

@@ -48,7 +48,7 @@ export function Header({ pathname, onNavigate }: HeaderProps) {
             href="/defensive-list"
             onClick={handleNavigate("/defensive-list")}
           >
-            Copiar Mapa
+            Lista de Aldeias Ofensivas
           </a>
         </nav>
       </div>
