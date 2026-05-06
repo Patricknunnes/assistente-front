@@ -2,9 +2,11 @@ import { useCallback, useEffect, useState } from "react";
 import { Header } from "./components/common/Header";
 import { getDefaultFrom } from "./components/reports/SearchForm";
 import { useReports } from "./hooks/useReports";
+import { useVillageCoords } from "./hooks/useVillageCoords";
+import { DefensiveList, getDefaultCoordFrom } from "./pages/DefensiveList";
 import { SimpleList } from "./pages/SimpleList";
 import { WeakestReports } from "./pages/WeakestReports";
-import type { ReportSearchParams } from "./types/report";
+import type { ReportSearchParams, VillageCoordSearchParams } from "./types/report";
 import styles from "./App.module.css";
 
 function App() {
@@ -12,8 +14,18 @@ function App() {
   const [playerName, setPlayerName] = useState("otavio10ta");
   const [limit, setLimit] = useState(10);
   const [from, setFrom] = useState(getDefaultFrom);
+  const [coordPlayerName, setCoordPlayerName] = useState("");
+  const [coordFrom, setCoordFrom] = useState(getDefaultCoordFrom);
   const { reports, loading, error, usingMock, search } = useReports();
+  const {
+    villages,
+    loading: coordsLoading,
+    error: coordsError,
+    usingMock: coordsUsingMock,
+    search: searchCoords,
+  } = useVillageCoords();
   const isSimpleList = pathname === "/simple-list";
+  const isDefensiveList = pathname === "/defensive-list";
 
   useEffect(() => {
     const handlePopState = () => setPathname(window.location.pathname);
@@ -41,6 +53,15 @@ function App() {
     [search]
   );
 
+  const handleCoordSearch = useCallback(
+    (params: VillageCoordSearchParams) => {
+      setCoordPlayerName(params.playerName ?? "");
+      setCoordFrom(params.from ?? "");
+      searchCoords(params);
+    },
+    [searchCoords]
+  );
+
   const sharedPageProps = {
     reports,
     loading,
@@ -55,11 +76,25 @@ function App() {
     onFromChange: setFrom,
   };
 
+  const defensivePageProps = {
+    villages,
+    loading: coordsLoading,
+    error: coordsError,
+    usingMock: coordsUsingMock,
+    search: handleCoordSearch,
+    playerName: coordPlayerName,
+    from: coordFrom,
+    onPlayerNameChange: setCoordPlayerName,
+    onFromChange: setCoordFrom,
+  };
+
   return (
     <div className={styles.app}>
       <Header pathname={pathname} onNavigate={handleNavigate} />
       <main className={styles.main}>
-        {isSimpleList ? (
+        {isDefensiveList ? (
+          <DefensiveList {...defensivePageProps} />
+        ) : isSimpleList ? (
           <SimpleList {...sharedPageProps} />
         ) : (
           <WeakestReports {...sharedPageProps} />

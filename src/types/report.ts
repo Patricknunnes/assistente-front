@@ -33,3 +33,8 @@ export interface ReportSearchParams {
   limit: number;
   from: string;
 }
+
+export interface VillageCoordSearchParams {
+  playerName?: string;
+  from?: string;
+}

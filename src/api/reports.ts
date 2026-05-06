@@ -1,4 +1,8 @@
-import type { ReportSearchParams, VillageReport } from "../types/report";
+import type {
+  ReportSearchParams,
+  VillageCoordSearchParams,
+  VillageReport,
+} from "../types/report";
 import { apiGet } from "./client";
 
 export function fetchWeakestReports(
@@ -10,6 +14,19 @@ export function fetchWeakestReports(
       playerName: params.playerName,
       limit: String(params.limit),
       from: params.from,
+    },
+    signal,
+  });
+}
+
+export function fetchOffensiveVillages(
+  params: VillageCoordSearchParams,
+  signal?: AbortSignal
+): Promise<string[]> {
+  return apiGet<string[]>("/api/reports/offensive-villages", {
+    params: {
+      playerName: params.playerName ?? "",
+      from: params.from ?? "",
     },
     signal,
   });

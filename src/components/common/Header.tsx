@@ -41,6 +41,15 @@ export function Header({ pathname, onNavigate }: HeaderProps) {
           >
             Lista Simples
           </a>
+          <a
+            className={
+              pathname === "/defensive-list" ? styles.navLinkActive : styles.navLink
+            }
+            href="/defensive-list"
+            onClick={handleNavigate("/defensive-list")}
+          >
+            Copiar Mapa
+          </a>
         </nav>
       </div>
     </header>
