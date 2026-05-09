@@ -1,6 +1,7 @@
 import type {
   ReportSearchParams,
   VillageCoordSearchParams,
+  VillageHistorySearchParams,
   VillageReport,
 } from "../types/report";
 import { apiGet } from "./client";
@@ -27,6 +28,19 @@ export function fetchOffensiveVillages(
     params: {
       playerName: params.playerName ?? "",
       from: params.from ?? "",
+    },
+    signal,
+  });
+}
+
+export function fetchReportHistory(
+  params: VillageHistorySearchParams,
+  signal?: AbortSignal
+): Promise<VillageReport[]> {
+  return apiGet<VillageReport[]>("/api/reports/report-history", {
+    params: {
+      coord: params.coord,
+      limit: String(params.limit),
     },
     signal,
   });

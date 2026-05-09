@@ -38,3 +38,8 @@ export interface VillageCoordSearchParams {
   playerName?: string;
   from?: string;
 }
+
+export interface VillageHistorySearchParams {
+  coord: string;
+  limit: number;
+}

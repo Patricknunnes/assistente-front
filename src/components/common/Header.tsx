@@ -50,6 +50,15 @@ export function Header({ pathname, onNavigate }: HeaderProps) {
           >
             Lista de Aldeias Ofensivas
           </a>
+          <a
+            className={
+              pathname === "/village-history" ? styles.navLinkActive : styles.navLink
+            }
+            href="/village-history"
+            onClick={handleNavigate("/village-history")}
+          >
+            Historico de Aldeia
+          </a>
         </nav>
       </div>
     </header>

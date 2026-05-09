@@ -2,11 +2,17 @@ import { useCallback, useEffect, useState } from "react";
 import { Header } from "./components/common/Header";
 import { getDefaultFrom } from "./components/reports/SearchForm";
 import { useReports } from "./hooks/useReports";
+import { useVillageHistory } from "./hooks/useVillageHistory";
 import { useVillageCoords } from "./hooks/useVillageCoords";
 import { DefensiveList, getDefaultCoordFrom } from "./pages/DefensiveList";
 import { SimpleList } from "./pages/SimpleList";
+import { VillageHistory } from "./pages/VillageHistory";
 import { WeakestReports } from "./pages/WeakestReports";
-import type { ReportSearchParams, VillageCoordSearchParams } from "./types/report";
+import type {
+  ReportSearchParams,
+  VillageCoordSearchParams,
+  VillageHistorySearchParams,
+} from "./types/report";
 import styles from "./App.module.css";
 
 function App() {
@@ -16,7 +22,16 @@ function App() {
   const [from, setFrom] = useState(getDefaultFrom);
   const [coordPlayerName, setCoordPlayerName] = useState("");
   const [coordFrom, setCoordFrom] = useState(getDefaultCoordFrom);
+  const [historyCoord, setHistoryCoord] = useState("485|447");
+  const [historyLimit, setHistoryLimit] = useState(10);
   const { reports, loading, error, usingMock, search } = useReports();
+  const {
+    reports: historyReports,
+    loading: historyLoading,
+    error: historyError,
+    usingMock: historyUsingMock,
+    search: searchHistory,
+  } = useVillageHistory();
   const {
     villages,
     loading: coordsLoading,
@@ -26,6 +41,7 @@ function App() {
   } = useVillageCoords();
   const isSimpleList = pathname === "/simple-list";
   const isDefensiveList = pathname === "/defensive-list";
+  const isVillageHistory = pathname === "/village-history";
 
   useEffect(() => {
     const handlePopState = () => setPathname(window.location.pathname);
@@ -62,6 +78,15 @@ function App() {
     [searchCoords]
   );
 
+  const handleHistorySearch = useCallback(
+    (params: VillageHistorySearchParams) => {
+      setHistoryCoord(params.coord);
+      setHistoryLimit(params.limit);
+      searchHistory(params);
+    },
+    [searchHistory]
+  );
+
   const sharedPageProps = {
     reports,
     loading,
@@ -88,11 +113,25 @@ function App() {
     onFromChange: setCoordFrom,
   };
 
+  const historyPageProps = {
+    reports: historyReports,
+    loading: historyLoading,
+    error: historyError,
+    usingMock: historyUsingMock,
+    search: handleHistorySearch,
+    coord: historyCoord,
+    limit: historyLimit,
+    onCoordChange: setHistoryCoord,
+    onLimitChange: setHistoryLimit,
+  };
+
   return (
     <div className={styles.app}>
       <Header pathname={pathname} onNavigate={handleNavigate} />
       <main className={styles.main}>
-        {isDefensiveList ? (
+        {isVillageHistory ? (
+          <VillageHistory {...historyPageProps} />
+        ) : isDefensiveList ? (
           <DefensiveList {...defensivePageProps} />
         ) : isSimpleList ? (
           <SimpleList {...sharedPageProps} />
