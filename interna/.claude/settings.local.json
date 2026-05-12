@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(uv add *)",
+      "Bash(uv run *)",
+      "Bash(curl -s http://127.0.0.1:8765/ -o /dev/null -w \"%{http_code}\")",
+      "Bash(netstat -ano)",
+      "Bash(netsh int *)"
+    ]
+  }
+}

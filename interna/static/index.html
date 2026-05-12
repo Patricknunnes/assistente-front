@@ -1,0 +1,543 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8" />
+<title>Distribuição de Aldeias</title>
+<style>
+  :root {
+    --bg: #1e1f23;
+    --panel: #2a2c33;
+    --panel2: #34373f;
+    --border: #44474f;
+    --text: #e8e8ec;
+    --muted: #a0a3ab;
+    --accent: #5b9bd5;
+    --danger: #e57373;
+    --ok: #81c784;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, Segoe UI, Roboto, sans-serif;
+    font-size: 13px;
+  }
+  .layout {
+    display: grid;
+    grid-template-columns: 420px 1fr;
+    height: 100vh;
+  }
+  .sidebar {
+    background: var(--panel);
+    padding: 16px;
+    overflow-y: auto;
+    border-right: 1px solid var(--border);
+  }
+  .main {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  h2 { margin: 0 0 12px; font-size: 16px; }
+  h3 { margin: 18px 0 8px; font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  label { display: block; margin: 6px 0 2px; font-size: 12px; color: var(--muted); }
+  textarea, input {
+    width: 100%;
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 4px;
+    padding: 6px 8px;
+    font-family: ui-monospace, Consolas, monospace;
+    font-size: 12px;
+  }
+  textarea { resize: vertical; }
+  button {
+    background: var(--accent);
+    color: #fff;
+    border: 0;
+    border-radius: 4px;
+    padding: 8px 14px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  button.secondary { background: var(--panel2); color: var(--text); border: 1px solid var(--border); }
+  button:hover { filter: brightness(1.1); }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .player-row {
+    display: grid;
+    grid-template-columns: 1fr 60px 80px 60px 28px;
+    gap: 4px;
+    margin-bottom: 4px;
+    align-items: center;
+  }
+  .player-row input { padding: 4px 6px; }
+  .player-row .rm { background: transparent; color: var(--danger); border: 1px solid var(--border); padding: 4px 0; }
+  .row-header {
+    display: grid;
+    grid-template-columns: 1fr 60px 80px 60px 28px;
+    gap: 4px;
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+  #canvasWrap {
+    flex: 1;
+    position: relative;
+    background: #14151a;
+    overflow: hidden;
+  }
+  #canvas { display: block; width: 100%; height: 100%; cursor: grab; }
+  #canvas:active { cursor: grabbing; }
+  #legend {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(20,21,26,0.9);
+    border: 1px solid var(--border);
+    padding: 8px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    max-height: calc(100vh - 220px);
+    overflow-y: auto;
+  }
+  #legend .item { display: flex; align-items: center; gap: 6px; margin: 2px 0; }
+  #legend .swatch { width: 12px; height: 12px; border-radius: 50%; }
+  #tooltip {
+    position: absolute;
+    background: rgba(20,21,26,0.95);
+    border: 1px solid var(--border);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    pointer-events: none;
+    display: none;
+    font-family: ui-monospace, Consolas, monospace;
+  }
+  #output {
+    height: 200px;
+    border-top: 1px solid var(--border);
+    background: var(--panel);
+    display: flex;
+    flex-direction: column;
+  }
+  #output .head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  #output textarea {
+    flex: 1;
+    border: 0;
+    border-radius: 0;
+    background: #14151a;
+    font-size: 12px;
+  }
+  .status {
+    padding: 8px 10px;
+    border-radius: 4px;
+    margin: 8px 0;
+    font-size: 12px;
+  }
+  .status.error { background: #4a2a2a; border: 1px solid var(--danger); }
+  .status.ok { background: #2a4a2a; border: 1px solid var(--ok); }
+  .status ul { margin: 4px 0 0 16px; padding: 0; }
+  .small { font-size: 11px; color: var(--muted); }
+  hr { border: 0; border-top: 1px solid var(--border); margin: 14px 0; }
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <h2>Distribuição de Aldeias</h2>
+
+    <h3>Aldeias do alvo</h3>
+    <label>Cole o texto bruto — só os <code>x|y</code> serão extraídos</label>
+    <textarea id="coords" rows="6" placeholder="Pode colar tudo, ex:&#10;Nobre | SvnAr&#10;559|418    10.476&#10;Nobre | SvnAr&#10;550|435    10.476"></textarea>
+    <div class="small"><span id="coordCount">0</span> coordenadas únicas extraídas</div>
+
+    <h3>Jogadores</h3>
+    <label>Mundo (usado quando Ref está vazia)</label>
+    <input id="mundo" value="br136" />
+    <div class="row-header" style="margin-top:10px;">
+      <div>Nome</div><div>Qtd</div><div>Ref (vazio=auto)</div><div>Alcance</div><div></div>
+    </div>
+    <div id="players"></div>
+    <button class="secondary" id="addPlayer" style="margin-top:6px;">+ Adicionar jogador</button>
+
+    <div class="actions">
+      <button id="run">Distribuir</button>
+      <button class="secondary" id="loadExample">Exemplo</button>
+    </div>
+
+    <div id="status"></div>
+  </aside>
+
+  <main class="main">
+    <div id="canvasWrap">
+      <canvas id="canvas"></canvas>
+      <div id="legend"></div>
+      <div id="tooltip"></div>
+    </div>
+    <div id="output">
+      <div class="head">
+        <strong>Resultado</strong>
+        <div>
+          <button class="secondary" id="copyOut">Copiar tudo</button>
+        </div>
+      </div>
+      <textarea id="outputText" readonly placeholder="A saída &lt;coord&gt; | &lt;jogador&gt; aparece aqui após distribuir."></textarea>
+    </div>
+  </main>
+</div>
+
+<script>
+const COLORS = [
+  '#e6194b','#3cb44b','#ffe119','#4363d8','#f58231','#911eb4','#46f0f0','#f032e6',
+  '#bcf60c','#fabebe','#008080','#e6beff','#9a6324','#fffac8','#800000','#aaffc3',
+  '#808000','#ffd8b1','#000075','#a9a9a9'
+];
+
+const $ = (id) => document.getElementById(id);
+const playersEl = $('players');
+const coordsEl = $('coords');
+const coordCountEl = $('coordCount');
+const statusEl = $('status');
+const outputTextEl = $('outputText');
+const canvas = $('canvas');
+const ctx = canvas.getContext('2d');
+const tooltipEl = $('tooltip');
+const legendEl = $('legend');
+
+let lastResult = null;
+
+function parseCoords(str) {
+  const matches = str.match(/\b\d{1,3}\|\d{1,3}\b/g) || [];
+  return [...new Set(matches)];
+}
+
+function updateCoordCount() {
+  coordCountEl.textContent = parseCoords(coordsEl.value).length;
+}
+coordsEl.addEventListener('input', updateCoordCount);
+
+coordsEl.addEventListener('paste', (e) => {
+  e.preventDefault();
+  const raw = (e.clipboardData || window.clipboardData).getData('text');
+  const cleaned = parseCoords(raw).join('\n');
+  const start = coordsEl.selectionStart;
+  const end = coordsEl.selectionEnd;
+  const before = coordsEl.value.slice(0, start);
+  const after = coordsEl.value.slice(end);
+  const sep = before && !before.endsWith('\n') ? '\n' : '';
+  coordsEl.value = before + sep + cleaned + after;
+  const pos = (before + sep + cleaned).length;
+  coordsEl.setSelectionRange(pos, pos);
+  updateCoordCount();
+});
+
+function addPlayerRow(data = {}) {
+  const row = document.createElement('div');
+  row.className = 'player-row';
+  row.innerHTML = `
+    <input class="p-nome" placeholder="nome" value="${data.nome || ''}" />
+    <input class="p-qtd" type="number" min="0" placeholder="qtd" value="${data.qtd ?? ''}" />
+    <input class="p-ref" placeholder="auto" value="${data.ref || ''}" />
+    <input class="p-alc" type="number" min="1" step="0.5" value="${data.alcance ?? 12}" />
+    <button class="rm" title="remover">×</button>
+  `;
+  row.querySelector('.rm').addEventListener('click', () => row.remove());
+  playersEl.appendChild(row);
+  return row;
+}
+
+function getPlayers() {
+  return [...playersEl.querySelectorAll('.player-row')].map(r => ({
+    nome: r.querySelector('.p-nome').value.trim(),
+    qtd: parseInt(r.querySelector('.p-qtd').value || '0', 10),
+    ref: r.querySelector('.p-ref').value.trim(),
+    alcance: parseFloat(r.querySelector('.p-alc').value || '12'),
+  })).filter(p => p.nome);
+}
+
+$('addPlayer').addEventListener('click', () => addPlayerRow());
+
+$('loadExample').addEventListener('click', () => {
+  coordsEl.value = '547|351 577|349 573|336 556|356 560|359 557|353 567|348 570|348 478|348 478|381 486|347 562|342 552|349';
+  updateCoordCount();
+  playersEl.innerHTML = '';
+  addPlayerRow({ nome: 'dh', qtd: 4, ref: '547|354', alcance: 29 });
+  addPlayerRow({ nome: 'otavio', qtd: 4, ref: '482|365', alcance: 29 });
+  addPlayerRow({ nome: 'Umboi', qtd: 5, ref: '565|345', alcance: 29 });
+});
+
+addPlayerRow();
+
+$('run').addEventListener('click', async () => {
+  statusEl.innerHTML = '';
+  const coordenadas = parseCoords(coordsEl.value);
+  const jogadores = getPlayers();
+  if (coordenadas.length === 0) return showError('Nenhuma coordenada informada.');
+  if (jogadores.length === 0) return showError('Nenhum jogador informado.');
+  const somaQtd = jogadores.reduce((s, j) => s + j.qtd, 0);
+  if (somaQtd > coordenadas.length) {
+    return showError(`Soma das qtds (${somaQtd}) > total de aldeias (${coordenadas.length}).`);
+  }
+  $('run').disabled = true;
+  try {
+    const mundo = $('mundo').value.trim() || 'br136';
+    const r = await fetch('/distribuir', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ coordenadas, jogadores, mundo }),
+    });
+    const data = await r.json();
+    handleResult(data);
+  } catch (e) {
+    showError('Falha ao chamar backend: ' + e.message);
+  } finally {
+    $('run').disabled = false;
+  }
+});
+
+function showError(msg, extras) {
+  let html = `<div class="status error"><strong>Erro:</strong> ${msg}`;
+  if (extras && extras.length) {
+    html += '<ul>' + extras.map(e => `<li>${e}</li>`).join('') + '</ul>';
+  }
+  html += '</div>';
+  statusEl.innerHTML = html;
+}
+
+function showOk(msg) {
+  statusEl.innerHTML = `<div class="status ok">${msg}</div>`;
+}
+
+function handleResult(data) {
+  if (data.status === 'erro') return showError(data.mensagem);
+  if (data.status === 'infeasible') {
+    const extras = [];
+    if (data.aldeias_sem_cobertura?.length) {
+      extras.push('Aldeias fora do alcance de qualquer jogador: ' + data.aldeias_sem_cobertura.join(', '));
+    }
+    if (data.jogadores_saturados?.length) {
+      for (const j of data.jogadores_saturados) {
+        if (j.faltam !== undefined) {
+          extras.push(`${j.nome}: pediu ${j.qtd_pedida}, faltam ${j.faltam} (concorrência por aldeias com outros jogadores)`);
+        } else {
+          extras.push(`${j.nome}: pediu ${j.qtd_pedida}, mas alcança no máximo ${j.max_alcancavel}`);
+        }
+      }
+    }
+    return showError(data.mensagem, extras);
+  }
+  lastResult = data;
+  view.fitted = false;
+  // preencher refs auto-resolvidas nas linhas
+  const rows = [...playersEl.querySelectorAll('.player-row')];
+  for (const j of data.jogadores) {
+    if (!j.ref_auto) continue;
+    const row = rows.find(r => r.querySelector('.p-nome').value.trim() === j.nome);
+    if (row) {
+      const inp = row.querySelector('.p-ref');
+      inp.value = j.ref;
+      inp.title = 'ref escolhida automaticamente';
+      inp.style.color = '#81c784';
+    }
+  }
+  const nNao = data.nao_atribuidas?.length || 0;
+  const nAuto = data.jogadores.filter(j => j.ref_auto).length;
+  let msg = `Distribuído: ${data.atribuicoes.length} aldeias para ${data.jogadores.length} jogadores.`;
+  if (nAuto > 0) msg += ` <span class="small">(${nAuto} ref(s) escolhida(s) auto)</span>`;
+  if (nNao > 0) msg += ` <strong>${nNao} aldeia(s) não atribuída(s)</strong>.`;
+  showOk(msg);
+  // agrupado por jogador, ordem dos jogadores conforme cadastro
+  const order = data.jogadores.map(j => j.nome);
+  const byPlayer = new Map(order.map(n => [n, []]));
+  for (const a of data.atribuicoes) {
+    byPlayer.get(a.player)?.push(a);
+  }
+  const blocos = [];
+  for (const nome of order) {
+    const list = byPlayer.get(nome) || [];
+    if (!list.length) continue;
+    blocos.push(list.map(a => `${a.player} | alvo: ${a.coord} | ataque saindo: ${a.launch}`).join('\n'));
+  }
+  outputTextEl.value = blocos.join('\n\n');
+  draw();
+  renderLegend();
+}
+
+$('copyOut').addEventListener('click', async () => {
+  if (!outputTextEl.value) return;
+  await navigator.clipboard.writeText(outputTextEl.value);
+  const btn = $('copyOut');
+  const old = btn.textContent;
+  btn.textContent = 'Copiado!';
+  setTimeout(() => (btn.textContent = old), 1200);
+});
+
+// ============ CANVAS ============
+let view = { scale: 1, ox: 0, oy: 0, dragging: false, lx: 0, ly: 0 };
+
+function resizeCanvas() {
+  const r = canvas.parentElement.getBoundingClientRect();
+  canvas.width = r.width * devicePixelRatio;
+  canvas.height = r.height * devicePixelRatio;
+  ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+  draw();
+}
+window.addEventListener('resize', resizeCanvas);
+
+function worldBounds() {
+  if (!lastResult) return null;
+  const xs = [], ys = [];
+  for (const a of lastResult.atribuicoes) { xs.push(a.x); ys.push(a.y); }
+  for (const a of (lastResult.nao_atribuidas || [])) { xs.push(a.x); ys.push(a.y); }
+  const pad = 3;
+  return {
+    minX: Math.min(...xs) - pad, maxX: Math.max(...xs) + pad,
+    minY: Math.min(...ys) - pad, maxY: Math.max(...ys) + pad,
+  };
+}
+
+function fitView() {
+  const b = worldBounds();
+  if (!b) return;
+  const w = canvas.width / devicePixelRatio, h = canvas.height / devicePixelRatio;
+  const sx = w / (b.maxX - b.minX), sy = h / (b.maxY - b.minY);
+  view.scale = Math.min(sx, sy) * 0.9;
+  view.ox = w / 2 - ((b.minX + b.maxX) / 2) * view.scale;
+  view.oy = h / 2 - ((b.minY + b.maxY) / 2) * view.scale;
+}
+
+function w2s(x, y) { return [x * view.scale + view.ox, y * view.scale + view.oy]; }
+function s2w(sx, sy) { return [(sx - view.ox) / view.scale, (sy - view.oy) / view.scale]; }
+
+function draw() {
+  const w = canvas.width / devicePixelRatio, h = canvas.height / devicePixelRatio;
+  ctx.fillStyle = '#14151a';
+  ctx.fillRect(0, 0, w, h);
+  if (!lastResult) return;
+  if (!view.fitted) { fitView(); view.fitted = true; }
+
+  // grid
+  ctx.strokeStyle = '#23252b';
+  ctx.lineWidth = 1;
+  const [wx0, wy0] = s2w(0, 0);
+  const [wx1, wy1] = s2w(w, h);
+  const step = Math.max(1, Math.round(50 / view.scale));
+  ctx.beginPath();
+  for (let gx = Math.floor(wx0 / step) * step; gx <= wx1; gx += step) {
+    const [sx] = w2s(gx, 0); ctx.moveTo(sx, 0); ctx.lineTo(sx, h);
+  }
+  for (let gy = Math.floor(wy0 / step) * step; gy <= wy1; gy += step) {
+    const [, sy] = w2s(0, gy); ctx.moveTo(0, sy); ctx.lineTo(w, sy);
+  }
+  ctx.stroke();
+
+
+  // unassigned villages (cinza, vazio)
+  for (const a of (lastResult.nao_atribuidas || [])) {
+    const [sx, sy] = w2s(a.x, a.y);
+    ctx.beginPath();
+    ctx.arc(sx, sy, 4, 0, Math.PI * 2);
+    ctx.fillStyle = 'transparent';
+    ctx.strokeStyle = '#888';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  // villages
+  for (const a of lastResult.atribuicoes) {
+    const [sx, sy] = w2s(a.x, a.y);
+    ctx.beginPath();
+    ctx.arc(sx, sy, 4, 0, Math.PI * 2);
+    ctx.fillStyle = COLORS[a.player_idx % COLORS.length];
+    ctx.fill();
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 0.5;
+    ctx.stroke();
+  }
+
+}
+
+function renderLegend() {
+  if (!lastResult) { legendEl.innerHTML = ''; return; }
+  const counts = {};
+  for (const a of lastResult.atribuicoes) counts[a.player] = (counts[a.player] || 0) + 1;
+  let html = lastResult.jogadores.map(j => `
+    <div class="item">
+      <span class="swatch" style="background:${COLORS[j.idx % COLORS.length]}"></span>
+      <span>${j.nome} — ${counts[j.nome] || 0} (alc. ${j.alcance})</span>
+    </div>
+  `).join('');
+  const nNao = lastResult.nao_atribuidas?.length || 0;
+  if (nNao > 0) {
+    html += `<div class="item"><span class="swatch" style="background:transparent;border:1px solid #888"></span><span>não atribuídas — ${nNao}</span></div>`;
+  }
+  legendEl.innerHTML = html;
+}
+
+// pan & zoom
+canvas.addEventListener('mousedown', (e) => { view.dragging = true; view.lx = e.clientX; view.ly = e.clientY; });
+canvas.addEventListener('mouseup', () => view.dragging = false);
+canvas.addEventListener('mouseleave', () => view.dragging = false);
+canvas.addEventListener('mousemove', (e) => {
+  if (view.dragging) {
+    view.ox += (e.clientX - view.lx);
+    view.oy += (e.clientY - view.ly);
+    view.lx = e.clientX; view.ly = e.clientY;
+    draw();
+  }
+  // tooltip
+  if (!lastResult) return;
+  const r = canvas.getBoundingClientRect();
+  const sx = e.clientX - r.left, sy = e.clientY - r.top;
+  let hit = null, hitNao = null;
+  for (const a of lastResult.atribuicoes) {
+    const [ax, ay] = w2s(a.x, a.y);
+    if (Math.hypot(ax - sx, ay - sy) < 6) { hit = a; break; }
+  }
+  if (!hit) {
+    for (const a of (lastResult.nao_atribuidas || [])) {
+      const [ax, ay] = w2s(a.x, a.y);
+      if (Math.hypot(ax - sx, ay - sy) < 6) { hitNao = a; break; }
+    }
+  }
+  if (hit) {
+    tooltipEl.style.display = 'block';
+    tooltipEl.style.left = (sx + 12) + 'px';
+    tooltipEl.style.top = (sy + 12) + 'px';
+    tooltipEl.textContent = `${hit.coord} → ${hit.player} (dist ${hit.dist})`;
+  } else if (hitNao) {
+    tooltipEl.style.display = 'block';
+    tooltipEl.style.left = (sx + 12) + 'px';
+    tooltipEl.style.top = (sy + 12) + 'px';
+    tooltipEl.textContent = `${hitNao.coord} → não atribuída`;
+  } else {
+    tooltipEl.style.display = 'none';
+  }
+});
+canvas.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  const r = canvas.getBoundingClientRect();
+  const sx = e.clientX - r.left, sy = e.clientY - r.top;
+  const [wx, wy] = s2w(sx, sy);
+  const f = e.deltaY < 0 ? 1.15 : 1 / 1.15;
+  view.scale *= f;
+  view.ox = sx - wx * view.scale;
+  view.oy = sy - wy * view.scale;
+  draw();
+}, { passive: false });
+
+resizeCanvas();
+</script>
+</body>
+</html>

@@ -1,355 +1,129 @@
 import math
-import random
-from collections import deque
-
-# ---------------------------
-# DADOS
-# ---------------------------
-array_coordenadas = [
-    (571,424),
-    (570,414),
-    (576,410),
-    (576,413),
-    (577,409),
-    (577,412),
-    (589,416),
-    (588,406),
-    (596,404),
-    (611,427),
-    (596,406),
-    (595,404),
-    (611,419),
-    (597,404),
-    (621,404),
-    (583,402),
-    (585,399),
-    (620,404),
-    (619,390),
-    (620,389),
-    (621,399),
-    (622,394),
-    (577,425),
-    (625,367),
-    (629,362),
-    (624,366),
-    (630,364),
-    (639,378),
-    (632,377),
-    (638,378),
-    (618,388),
-    (620,403),
-    (645,352),
-    (646,353),
-    (639,376),
-    (580,430),
-    (580,424),
-    (619,388),
-    (579,425),
-    (646,352),
-    (645,350),
-    (649,348),
-    (641,343),
-    (645,351),
-    (648,350),
-    (641,350),
-    (643,349),
-    (575,415),
-    (582,401),
-    (585,402),
-    (584,403),
-    (585,400),
-    (581,399),
-    (575,404),
-    (583,401),
-    (583,400),
-    (584,401),
-    (583,399),
-    (584,402),
-    (582,400),
-    (652,347),
-    (647,350),
-    (643,348),
-    (648,345),
-    (645,343),
-    (645,348),
-    (644,349),
-    (647,355),
-    (566,389),
-    (644,356),
-    (653,348),
-    (628,368),
-    (633,367),
-    (644,354),
-    (646,360),
-    (645,353),
-    (642,348),
-    (638,366),
-    (645,354),
-    (644,352),
-    (647,348),
-    (645,355),
-    (645,349),
-    (645,344),
-    (648,348),
-    (649,349),
-    (644,348),
-    (643,350),
-]
 
 
-# 647|318, 622|368, 624|367, 638|356, 655|340
+array_coordenadas_geral = ['547|351', '577|349', '573|336', '556|356', '560|359', '557|353', '567|348', '570|348', '468|359', '478|348', '570|351', '478|381', '574|335', '486|347', '562|342', '552|349', '466|368', '477|339', '558|356', '489|342', '555|343', '568|342', '575|337', '473|351', '472|356', '462|376', '592|351', '564|340', '469|348', '559|351', '558|362', '567|352', '480|383', '474|340', '470|347', '565|343', '562|360', '571|352', '469|342', '475|382', '550|338', '571|345', '553|357', '579|344', '471|385', '549|350', '567|345', '474|348', '552|351', '467|367', '490|341', '471|347', '570|346', '478|337', '465|371', '476|381', '543|344', '572|348', '561|351', '476|347', '566|342', '549|353', '574|349', '564|336', '489|341', '552|343', '559|350', '477|379', '473|382', '477|377', '560|361', '585|355', '586|340', '592|355', '563|348', '579|348', '577|363', '561|362', '548|339', '561|355', '484|337', '488|333', '566|338', '569|352', '560|340', '559|349', '472|380', '563|335', '581|363', '571|346', '555|345', '473|352', '474|335', '487|333', '595|358', '550|348', '571|338', '469|355', '581|360', '482|334', '561|339', '569|347', '558|354', '557|365', '561|326', '553|358', '471|376', '553|344', '567|359', '588|354', '562|333', '552|353', '479|381', '559|364', '483|344', '467|368', '551|347', '465|365', '555|351', '553|337', '470|351', '562|341', '564|339', '480|380', '477|346', '587|363', '592|359', '474|379', '471|377', '472|340', '559|354', '572|353', '480|331', '584|335', '554|351', '553|356', '570|352', '550|351', '473|378', '473|385', '482|329', '480|333', '561|363', '483|346', '557|339', '572|354', '476|345', '562|365', '459|378', '461|346', '483|336', '588|355', '469|377', '589|333', '584|355', '578|354', '576|345', '554|343', '465|372', '551|337', '554|346', '557|360', '566|362', '577|341', '570|336', '468|383', '572|345', '468|373', '466|373', '575|340', '569|360', '476|346', '483|345', '571|337', '466|371', '470|345', '582|351', '544|338', '592|353', '575|343', '468|349', '467|382', '561|352', '561|353', '473|379', '483|329', '490|345', '567|353', '568|339', '578|346', '567|336', '563|352', '553|343', '479|382', '472|361', '575|344', '557|352', '565|351', '564|345', '567|344', '473|372', '468|379', '466|378', '567|358', '581|346', '469|352', '563|339', '573|353', '573|339', '467|355', '558|345', '565|348', '557|340', '559|361', '469|382', '557|343', '565|340', '559|352', '573|350', '486|345', '479|334', '569|342', '577|347', '479|340', '479|379', '468|375', '573|342', '578|350', '587|333', '460|370', '559|362', '556|340', '469|380', '570|353', '579|347', '582|332', '473|356', '492|345', '553|355', '556|352', '565|338', '488|344', '466|385', '482|339', '582|356', '467|369', '584|338', '582|354', '574|355', '489|343', '563|354', '568|350', '566|332', '489|328', '565|361', '560|349', '572|331', '570|355', '474|381', '566|346', '558|339', '576|350', '479|345', '558|349', '578|351', '475|374', '478|336', '467|361', '577|352', '479|335', '567|341', '568|351', '563|337', '544|340', '475|338', '474|351', '468|378', '481|381', '578|348', '468|384', '555|346', '566|352', '491|350', '566|341', '474|354', '556|359', '575|347', '585|362', '571|356', '483|384', '564|346', '558|353', '569|356', '575|354', '489|344', '585|354', '558|355', '549|338', '469|341', '559|345', '574|353', '551|352', '553|345', '548|352', '550|346', '559|342', '551|348', '545|342', '570|341', '478|379', '560|362', '472|376', '580|335', '462|381', '562|352', '483|340', '571|353', '480|345', '563|346', '477|387', '472|357', '566|344', '472|353', '555|339', '473|353', '481|342', '469|381', '549|349', '477|382', '548|342', '564|342', '478|346', '487|345', '582|355', '488|337', '596|342', '552|352', '465|377', '563|349', '475|350', '472|381', '477|338', '580|344', '579|345', '466|364', '479|347', '467|370', '474|350', '573|354', '477|351', '478|384', '548|345', '562|348', '475|339', '482|340', '469|349', '468|348', '482|336', '587|340', '576|352', '583|358', '558|343', '481|382', '472|382', '551|344', '469|369', '566|337', '571|336', '576|337', '563|351', '590|356', '494|349', '578|342', '560|348', '471|386', '579|359', '461|380', '476|382', '467|374', '568|343', '572|355', '579|354', '477|386', '559|348', '568|338', '476|355', '464|371', '389|869', '588|341', '470|382', '486|334', '488|338', '559|338', '543|342', '561|350', '467|356', '556|344', '556|357', '558|338', '580|353', '469|343', '574|356', '554|341', '482|383', '555|347', '549|348', '567|342', '475|383', '554|345', '553|342', '469|385', '578|352', '473|355', '576|356', '559|346', '467|376', '551|354', '584|349', '553|341', '573|349', '561|360', '556|343', '582|353', '487|332', '561|346', '549|347', '489|347', '555|354', '562|338', '579|353', '487|347', '564|352', '548|347', '573|341', '474|353', '581|347', '491|349', '476|337', '583|335', '468|369', '480|348', '563|334', '466|374', '488|347', '563|333', '565|339', '562|351', '596|349', '544|341', '481|337', '483|338', '578|347', '556|349', '575|341', '488|345', '550|350', '552|342', '566|359', '484|340', '561|361', '476|380', '480|388', '469|373', '569|350', '576|346', '491|332', '560|336', '564|348', '577|344', '583|351', '565|359', '567|343', '568|352', '563|359', '573|340', '586|347', '469|350', '564|350', '560|358', '469|364', '479|339', '555|359', '559|363', '590|346', '473|383', '574|344', '566|336', '578|341', '466|372', '552|348', '492|351', '558|341', '563|363', '467|377', '556|353', '580|349', '563|327', '552|346', '475|380', '555|356', '464|382', '560|351', '558|357', '568|360', '586|352', '563|356', '567|349', '478|347', '490|340', '481|383', '467|375', '478|338', '582|346', '477|347', '561|343', '577|353', '581|361', '552|350', '479|336', '573|355', '572|344', '565|355', '552|341', '575|349', '576|351', '565|335', '573|348', '494|331', '558|352', '474|330', '475|347', '478|385', '555|344', '548|336', '558|347', '551|355', '480|382', '481|347', '467|364', '579|360', '587|354', '586|355', '546|343', '468|365', '465|382', '559|357', '574|337', '468|367', '550|349', '576|348', '557|349', '585|341', '585|364', '470|357', '460|373', '572|352', '570|349', '474|357', '474|341', '482|380', '562|347', '569|338', '565|360', '559|340', '469|378', '562|355', '564|341', '551|343', '553|339', '485|342', '581|355', '566|345', '554|342', '475|353', '566|350', '468|352', '578|355', '488|339', '579|355', '472|348', '469|371', '483|331', '476|339', '476|338', '488|349', '566|348', '496|350', '567|360', '472|337', '589|339', '588|358', '464|381', '463|383', '554|355', '557|341', '491|339', '463|374', '559|365', '580|355', '590|353', '486|348', '488|348', '543|343', '470|339', '565|334', '571|326', '564|334', '469|353', '472|385', '562|339', '483|385', '556|361', '577|335', '484|346', '471|341', '551|346', '563|355', '496|337', '568|346', '581|352', '562|345', '482|338', '477|380', '577|351', '474|384', '572|347', '478|339', '479|380', '548|341', '466|370', '470|376', '560|341', '564|358', '486|332', '582|345', '560|352', '484|345', '570|344', '464|366', '565|345', '572|339', '479|338', '462|384', '571|355', '555|342', '485|344', '571|347', '471|340', '477|350', '562|346', '560|357', '482|342', '475|385', '478|383', '557|355', '565|329', '475|345', '562|343', '568|349', '471|346', '562|330', '475|355', '473|346', '487|337', '483|335', '554|352', '545|345', '576|359', '575|342', '566|351', '474|352', '468|341', '566|347', '567|337', '569|358', '584|351', '471|353', '560|347', '570|345', '553|354', '489|349', '492|331', '475|381', '556|346', '468|360', '484|339', '571|339', '565|342', '574|343', '590|348', '592|357', '576|344', '561|357', '480|349', '578|353', '565|337', '579|358', '568|348', '485|347', '553|347', '557|354', '466|369', '482|343', '562|354', '570|358', '556|355', '565|353', '491|340', '574|348', '479|384', '486|343', '470|352', '467|350', '581|342', '552|340', '559|335', '576|343', '559|353', '468|370', '464|377', '485|346', '478|372', '489|345', '474|347', '476|344', '577|354', '480|342', '572|341', '478|386', '553|346', '548|348', '572|343', '570|354', '561|354', '564|362', '571|354', '468|368', '557|351', '578|349', '481|331', '577|361', '577|355', '489|340', '561|356', '467|379', '575|360', '557|350', '474|346', '463|381', '567|351', '554|353', '577|357', '584|347', '545|346', '472|374', '582|344', '581|351', '476|353', '583|348', '488|342', '550|347', '469|379', '482|348', '568|357', '561|359', '573|352', '570|347', '567|338', '469|386', '582|342', '564|338', '470|384', '565|347', '581|356', '568|358', '579|349', '480|340', '558|340', '561|345', '476|383', '563|353', '559|356', '560|335', '472|354', '560|356', '574|338', '580|332', '557|356', '569|353', '468|364', '561|349', '485|332', '482|382', '467|352', '566|343', '575|359', '551|353', '577|350', '474|356', '551|349', '567|357', '589|356', '566|353', '470|381', '560|342', '477|337', '460|367', '470|385', '488|329', '562|350', '485|343', '583|355', '583|350', '565|358', '570|350', '566|358', '470|386', '468|377', '465|364', '493|353', '480|347', '487|339', '470|336', '579|346', '576|342', '559|359', '571|340', '467|363', '472|383', '555|337', '561|341', '587|335', '559|339', '574|347', '553|340', '552|354', '486|339', '557|335', '479|346', '552|356', '577|332', '567|346', '480|387', '475|340', '579|336', '470|350', '558|351', '561|342', '583|340', '576|347', '476|351', '558|365', '565|350', '473|374', '474|355', '575|353', '483|337', '552|344', '480|344', '576|354', '558|348', '578|345', '562|359', '470|379', '553|353', '556|358', '488|341', '569|343', '471|349', '466|376', '556|345', '482|346', '469|360', '584|356', '569|341', '564|353', '490|351', '476|329', '565|346', '562|349', '465|383', '548|344', '571|330', '574|354', '555|350', '589|350', '564|335', '471|351', '482|381', '475|344', '488|343', '469|376']
 
-
-# falta 25 p junior
-# receber 25 emerson
-
-
-# ---------------------------
-# CONFIG
-# ---------------------------
-MAX_DIST = 29
 
 divisoes = [
-    {'renner': 30, 'referencia': (554, 414)},
-    {'otavio': 4},
-    {'alba': 17, 'referencia': (554, 418)},
-    {'dukstenn': 23, 'referencia': (569, 435)},
-    {'reboucas': 14, 'referencia': (581, 398)},
+    #{'arrow': 61, 'referencia': (560,366)},
+    #{'dh': 25, 'referencia': (547,354)},
+    #{'kahar': 20, 'referencia': (527,352)},
+    #{'Umboi': 50, 'referencia': (552,358)},
+    #{'Zooster': 59, 'referencia': (589,351)},
+    #{'Wagner': 45, 'referencia': (549,364)},
+    #{'emerson': 15, 'referencia': (556,363)},
 ]
 
-coords = array_coordenadas
-n = len(coords)
+#normalizando coordenadas
+array_coordenadas = []
+for i in array_coordenadas_geral:
+    if isinstance(i, str):
+        x, y = map(int, i.split('|'))
+        
+        array_coordenadas.append((x, y))
+
+    if isinstance(i, tuple):
+        array_coordenadas.append(i)
+
+
+divisoes = [
+    {'dh': 34, 'referencia': (547,354)},
+    {'kahar': 4, 'referencia': (527,352)},
+    {'Umboi': 9, 'referencia': (552,358)},
+    {'Wagner': 8, 'referencia': (549,364)},
+    {'otavio': 113, 'referencia': (492,375)},
+    {'triturador': 118, 'referencia': (484,379)},
+    {'elton': 64, 'referencia': (474,361)},
+    {'balosao': 90, 'referencia': (467,378)},
+    {'brutolino': 118, 'referencia': (489,330)},
+    {'eteboyzin': 59, 'referencia': (511,378)},
+
+]
+
 
 # ---------------------------
-# Parse divisoes
+# PARSE
 # ---------------------------
+coords = []
+for c in array_coordenadas_geral:
+    if isinstance(c, str):
+        x, y = map(int, c.split('|'))
+        coords.append((x, y))
+    elif isinstance(c, tuple):
+        coords.append(c)
+
+n = len(coords)
+
 names, sizes, refs = [], [], []
 for d in divisoes:
     key = [kk for kk in d if kk != 'referencia'][0]
     names.append(key)
     sizes.append(d[key])
-    refs.append(d.get('referencia'))
+    refs.append(d['referencia'])
 
 k = len(names)
-total_needed = sum(sizes)
+MAX_DIST = 29
 
-print(f"Total pontos: {n}")
-print(f"Total necessario: {total_needed}")
-if total_needed != n:
-    diff = total_needed - n
-    if diff > 0:
-        print(f"  ATENCAO: faltam {diff} ponto(s) no array!")
-    else:
-        print(f"  ATENCAO: sobram {abs(diff)} ponto(s) no array!")
-
-
-# ---------------------------
-# Helpers
-# ---------------------------
 def dist(a, b):
     return math.sqrt((a[0] - b[0])**2 + (a[1] - b[1])**2)
 
-
-# Pre-computar distancias entre todos os pontos
-dist_matrix = [[0.0] * n for _ in range(n)]
-for i in range(n):
-    for j in range(i + 1, n):
-        d = dist(coords[i], coords[j])
-        dist_matrix[i][j] = d
-        dist_matrix[j][i] = d
-
-# Grafo de adjacencia (pontos dentro de MAX_DIST)
-adj = [[] for _ in range(n)]
-adj_set = [set() for _ in range(n)]
-for i in range(n):
-    for j in range(i + 1, n):
-        if dist_matrix[i][j] <= MAX_DIST:
-            adj[i].append(j)
-            adj[j].append(i)
-            adj_set[i].add(j)
-            adj_set[j].add(i)
-
-
-def is_connected(pts):
-    if len(pts) <= 1:
-        return True
-    pts_set = set(pts) if not isinstance(pts, set) else pts
-    start = next(iter(pts_set))
-    visited = {start}
-    q = deque([start])
-    while q:
-        p = q.popleft()
-        for nb in adj[p]:
-            if nb in pts_set and nb not in visited:
-                visited.add(nb)
-                q.append(nb)
-    return len(visited) == len(pts_set)
-
-
-# Score rapido (sem diametro - usado na otimizacao)
-def quick_score(clusters):
-    s = 0
-    for i in range(k):
-        diff = abs(len(clusters[i]) - sizes[i])
-        if diff == 0:
-            s += 100
-        else:
-            s -= diff * 20
-    return s
+print(f"Total pontos: {n}")
+print(f"Total necessario: {sum(sizes)}")
 
 
 # ---------------------------
-# Algoritmo: BFS proporcional compacto
+# CLUSTERS BALANCEADOS (ROUND-ROBIN POR NECESSIDADE)
 # ---------------------------
-def solve(attempt=0):
-    rng = random.Random(attempt * 7 + 13)
 
-    # --- Seeds ---
-    used = set()
-    seeds = [None] * k
+assignment = [-1] * n
+counts = [0] * k
 
-    ref_order = sorted(
-        [i for i in range(k) if refs[i]],
-        key=lambda i: -sizes[i]
-    )
+# Pre-computar distancias ponto->referencia
+dists = [[dist(coords[p], refs[i]) for i in range(k)] for p in range(n)]
 
-    for i in ref_order:
-        candidates = sorted(
-            [(j, dist(coords[j], refs[i])) for j in range(n) if j not in used],
-            key=lambda x: x[1]
-        )
-        pick = 0
-        if attempt > 0 and len(candidates) > 2:
-            pick = rng.randint(0, min(3, len(candidates) - 1))
-        seeds[i] = candidates[pick][0]
-        used.add(seeds[i])
-
+total_to_assign = min(sum(sizes), n)
+for _ in range(total_to_assign):
+    # Divisao com menor fill_ratio escolhe primeiro
+    # Empate: quem tem pior situacao (ponto disponivel mais proximo esta mais longe) tem prioridade
+    best_div = None
+    best_key = None
     for i in range(k):
-        if seeds[i] is None:
-            candidates = [j for j in range(n) if j not in used]
-            if attempt == 0:
-                seeds[i] = max(candidates, key=lambda j: len(adj[j]))
-            else:
-                seeds[i] = rng.choice(candidates)
-            used.add(seeds[i])
-
-    # --- Crescimento BFS proporcional ---
-    clusters = [set([seeds[i]]) for i in range(k)]
-    assigned = set(seeds)
-
-    for round_num in range(n):
-        if all(len(clusters[i]) >= sizes[i] for i in range(k)):
-            break
-        if len(assigned) >= n:
-            break
-
-        # Ordena por % preenchimento (menos preenchido primeiro)
-        order = sorted(
-            range(k),
-            key=lambda i: len(clusters[i]) / max(sizes[i], 1)
-        )
-
-        for i in order:
-            if len(clusters[i]) >= sizes[i]:
-                continue
-
-            # Vizinhos nao alocados do cluster
-            candidates = []
-            for p in clusters[i]:
-                for nb in adj[p]:
-                    if nb not in assigned:
-                        # Distancia ao ponto mais proximo do cluster
-                        min_d = min(dist_matrix[nb][cp] for cp in clusters[i])
-                        candidates.append((min_d, nb))
-
-            if not candidates:
-                continue
-
-            # Pega o mais proximo (crescimento compacto)
-            candidates.sort()
-            best = candidates[0][1]
-            clusters[i].add(best)
-            assigned.add(best)
-
-    # --- Encaixa restantes ---
-    for p in range(n):
-        if p in assigned:
+        if counts[i] >= sizes[i]:
             continue
-        best_i = None
-        best_d = float('inf')
-        for i in range(k):
-            if len(clusters[i]) >= sizes[i]:
-                continue
-            for cp in clusters[i]:
-                if dist_matrix[p][cp] <= MAX_DIST and dist_matrix[p][cp] < best_d:
-                    best_d = dist_matrix[p][cp]
-                    best_i = i
-        if best_i is not None:
-            clusters[best_i].add(p)
-            assigned.add(p)
+        ratio = counts[i] / sizes[i]
+        closest_d = min((dists[p][i] for p in range(n) if assignment[p] < 0), default=float('inf'))
+        key = (ratio, -closest_d)
+        if best_key is None or key < best_key:
+            best_key = key
+            best_div = i
 
-    # --- Busca local: mover de cheio para vazio ---
-    for _ in range(500):
-        improved = False
-        for i in range(k):
-            if len(clusters[i]) <= sizes[i]:
-                continue
-            for j in range(k):
-                if i == j or len(clusters[j]) >= sizes[j]:
-                    continue
-                for p in list(clusters[i]):
-                    if not (adj_set[p] & clusters[j]):
-                        continue
-                    clusters[i].remove(p)
-                    if not is_connected(clusters[i]):
-                        clusters[i].add(p)
-                        continue
-                    clusters[j].add(p)
-                    if not is_connected(clusters[j]):
-                        clusters[j].remove(p)
-                        clusters[i].add(p)
-                        continue
-                    improved = True
-                    break
-                if improved:
-                    break
-            if improved:
-                break
-        if not improved:
-            break
+    if best_div is None:
+        break
 
-    return clusters, assigned, quick_score(clusters)
+    # Essa divisao pega o ponto mais proximo disponivel
+    best_p = min(
+        (p for p in range(n) if assignment[p] < 0),
+        key=lambda p: dists[p][best_div]
+    )
+    assignment[best_p] = best_div
+    counts[best_div] += 1
+
+# Fallback: pontos que sobraram
+for p in range(n):
+    if assignment[p] >= 0:
+        continue
+    best_i = min(
+        (i for i in range(k) if counts[i] < sizes[i]),
+        key=lambda i: dists[p][i],
+        default=None
+    )
+    if best_i is not None:
+        assignment[best_p] = best_i
+        counts[best_i] += 1
 
 
 # ---------------------------
-# Multi-start
-# ---------------------------
-best_clusters = None
-best_assigned = None
-best_score = -float('inf')
-
-NUM_ATTEMPTS = 200
-
-for attempt in range(NUM_ATTEMPTS):
-    clusters, assigned, s = solve(attempt)
-
-    if s > best_score:
-        best_score = s
-        best_clusters = [set(c) for c in clusters]
-        best_assigned = set(assigned)
-
-perfect = k * 100
-if best_score >= perfect:
-    print(f"\nSolucao perfeita encontrada!")
-else:
-    print(f"\nMelhor score: {best_score} / {perfect}")
-
-clusters = best_clusters
-assigned = best_assigned
-
-
-# ---------------------------
-# RESULTADO FINAL
+# RESULTADO
 # ---------------------------
 print("\n" + "=" * 55)
 print("  RESULTADO FINAL")
@@ -357,61 +131,44 @@ print("=" * 55)
 
 all_ok = True
 for i in range(k):
-    sz = len(clusters[i])
+    pts = [p for p in range(n) if assignment[p] == i]
+    sz = len(pts)
     target = sizes[i]
 
-    # Diametro
-    diam = 0
-    pts = list(clusters[i])
-    for a in range(len(pts)):
-        for b in range(a + 1, len(pts)):
-            d = dist_matrix[pts[a]][pts[b]]
-            if d > diam:
-                diam = d
+    closest_p = min(pts, key=lambda p: dist(coords[p], refs[i])) if pts else None
+    min_ref = dist(coords[closest_p], refs[i]) if closest_p is not None else float('inf')
 
     print(f"\n{'-' * 55}")
     print(f"  {names[i].upper()}")
     print(f"{'-' * 55}")
 
-    ok_size = (sz == target)
+    ok_size = sz == target
     status = "OK" if ok_size else f"(faltam {target - sz})" if sz < target else f"(sobram {sz - target})"
     print(f"  Qtd: {sz} / {target}  {status}")
     if not ok_size:
         all_ok = False
 
-    if refs[i]:
-        min_d = min(dist(coords[p], refs[i]) for p in clusters[i])
-        ok_ref = min_d <= MAX_DIST
-        print(f"  Dist ref: {min_d:.1f}  {'OK' if ok_ref else 'FALHA'}")
-        if not ok_ref:
-            all_ok = False
-
-    conn = is_connected(clusters[i])
-    print(f"  Conectado: {'OK' if conn else 'FALHA'}")
-    if not conn:
+    ok_ref = min_ref <= MAX_DIST
+    print(f"  Referencia: {refs[i][0]}|{refs[i][1]}")
+    if closest_p is not None:
+        print(f"  Aldeia mais proxima da ref: {coords[closest_p][0]}|{coords[closest_p][1]}  (dist: {min_ref:.1f})  {'OK' if ok_ref else 'FALHA'}")
+    else:
+        print(f"  Aldeia mais proxima da ref: nenhuma  FALHA")
+    if not ok_ref:
         all_ok = False
 
-    print(f"  Diametro: {diam:.1f}")
-
-    # Ponto isolado check
-    for p in clusters[i]:
-        has_nb = any(dist_matrix[p][q] <= MAX_DIST for q in clusters[i] if q != p)
-        if not has_nb and sz > 1:
-            print(f"  PONTO ISOLADO: {coords[p]}")
-            all_ok = False
-
-    print(f"  Coordenadas:")
-    sorted_pts = sorted(clusters[i], key=lambda p: (coords[p][0], coords[p][1]))
+    print(f"  Coordenadas (ordenadas por distancia da ref):")
+    sorted_pts = sorted(pts, key=lambda p: dist(coords[p], refs[i]))
     for p in sorted_pts:
-        print(f"    {coords[p][0]}|{coords[p][1]}")
+        d_ref = dist(coords[p], refs[i])
+        print(f"    {coords[p][0]}|{coords[p][1]}  (dist ref: {d_ref:.1f})")
 
-
-# Nao alocados
-unassigned_final = set(range(n)) - assigned
-if unassigned_final:
-    print(f"\n  NAO ALOCADOS: {len(unassigned_final)}")
-    for p in sorted(unassigned_final):
+unassigned = [p for p in range(n) if assignment[p] < 0]
+if unassigned:
+    print(f"\n  NAO ALOCADOS: {len(unassigned)}")
+    for p in unassigned:
         print(f"    {coords[p][0]}|{coords[p][1]}")
+    all_ok = False
 
 print()
 if all_ok:
