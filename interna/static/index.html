@@ -165,6 +165,33 @@
     <h3>Jogadores</h3>
     <label>Mundo (usado quando Ref está vazia)</label>
     <input id="mundo" value="br136" />
+
+    <div style="margin-top:10px;">
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+        <input type="checkbox" id="aristoCheck" />
+        <span>Conferir aristocracia (usar só aldeias de ataque)</span>
+      </label>
+    </div>
+    <div style="margin-top:6px;">
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+        <input type="checkbox" id="multiAtkCheck" />
+        <span>Aldeia fonte pode enviar mais de 1 ataque</span>
+      </label>
+    </div>
+    <div id="aristoBox" style="display:none;margin-top:6px;padding:8px;background:var(--panel2);border:1px solid var(--border);border-radius:4px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+        <div>
+          <label>Min. machado</label>
+          <input id="minAxe" type="number" value="4000" />
+        </div>
+        <div>
+          <label>Min. CL</label>
+          <input id="minLight" type="number" value="2000" />
+        </div>
+      </div>
+      <div id="aristoStatus" class="small" style="margin-top:8px;padding:6px 8px;border-radius:4px;background:#14151a;">carregando status…</div>
+      <div class="small" style="margin-top:4px;color:var(--muted);">Use o Tampermonkey na página <em>Tribo → Tropas</em> e clique "Exportar aristocracia → backend".</div>
+    </div>
     <div class="row-header" style="margin-top:10px;">
       <div>Nome</div><div>Qtd</div><div>Ref (vazio=auto)</div><div>Alcance</div><div></div>
     </div>
@@ -216,6 +243,7 @@ const tooltipEl = $('tooltip');
 const legendEl = $('legend');
 
 let lastResult = null;
+let lastAristo = null;
 
 function parseCoords(str) {
   const matches = str.match(/\b\d{1,3}\|\d{1,3}\b/g) || [];
@@ -279,6 +307,30 @@ $('loadExample').addEventListener('click', () => {
 
 addPlayerRow();
 
+$('aristoCheck').addEventListener('change', (e) => {
+  $('aristoBox').style.display = e.target.checked ? 'block' : 'none';
+  if (e.target.checked) refreshAristoStatus();
+});
+
+async function refreshAristoStatus() {
+  try {
+    const r = await fetch('/aristocracia/status');
+    const s = await r.json();
+    const el = $('aristoStatus');
+    if (s.loaded) {
+      const ts = s.updated_at ? new Date(s.updated_at * 1000) : null;
+      const age = ts ? Math.round((Date.now() - ts.getTime()) / 1000) : null;
+      const ageStr = age == null ? '' : ` (há ${age < 60 ? age + 's' : Math.round(age/60) + 'min'})`;
+      el.innerHTML = `<span style="color:var(--ok)">●</span> Aristocracia carregada: <strong>${s.n_players}</strong> jogadores, <strong>${s.n_villages}</strong> aldeias${ageStr}`;
+    } else {
+      el.innerHTML = `<span style="color:var(--danger)">●</span> Nenhuma aristocracia carregada. Rode o Tampermonkey.`;
+    }
+  } catch {
+    $('aristoStatus').textContent = 'erro ao buscar status';
+  }
+}
+setInterval(() => { if ($('aristoCheck').checked) refreshAristoStatus(); }, 5000);
+
 $('run').addEventListener('click', async () => {
   statusEl.innerHTML = '';
   const coordenadas = parseCoords(coordsEl.value);
@@ -292,12 +344,24 @@ $('run').addEventListener('click', async () => {
   $('run').disabled = true;
   try {
     const mundo = $('mundo').value.trim() || 'br136';
+    const body = { coordenadas, jogadores, mundo, multi_ataque_por_aldeia: $('multiAtkCheck').checked };
+    lastAristo = null;
+    if ($('aristoCheck').checked) {
+      const st = await fetch('/aristocracia/status').then(r => r.json()).catch(() => ({loaded:false}));
+      if (!st.loaded) return showError('Aristocracia não carregada. Rode o Tampermonkey na página Tribo → Tropas primeiro.');
+      body.use_aristocracia = true;
+      body.min_axe = parseInt($('minAxe').value || '4000', 10);
+      body.min_light = parseInt($('minLight').value || '2000', 10);
+    }
     const r = await fetch('/distribuir', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ coordenadas, jogadores, mundo }),
+      body: JSON.stringify(body),
     });
     const data = await r.json();
+    if (body.use_aristocracia && data.status === 'ok') {
+      try { lastAristo = await fetch('/aristocracia/data').then(r => r.json()); } catch {}
+    }
     handleResult(data);
   } catch (e) {
     showError('Falha ao chamar backend: ' + e.message);
@@ -363,11 +427,39 @@ function handleResult(data) {
   for (const a of data.atribuicoes) {
     byPlayer.get(a.player)?.push(a);
   }
+  const lookupTroops = (player, coord) => {
+    if (!lastAristo) return null;
+    const list = lastAristo[player.toLowerCase()];
+    if (!list) return null;
+    const [x, y] = coord.split('|').map(Number);
+    return list.find(v => v.x === x && v.y === y) || null;
+  };
+  // indice coord -> {player, troops} para encontrar dono de cada alvo
+  const targetIndex = new Map();
+  if (lastAristo) {
+    for (const [pname, vlist] of Object.entries(lastAristo)) {
+      for (const v of vlist) targetIndex.set(`${v.x}|${v.y}`, { player: pname, troops: v });
+    }
+  }
+  const fmtDefesa = (t) => {
+    const parts = [];
+    if (t.spear) parts.push(`lanc=${t.spear}`);
+    if (t.sword) parts.push(`esp=${t.sword}`);
+    if (t.archer) parts.push(`arq=${t.archer}`);
+    if (t.heavy) parts.push(`pes=${t.heavy}`);
+    return parts.length ? parts.join(' ') : '0';
+  };
   const blocos = [];
   for (const nome of order) {
     const list = byPlayer.get(nome) || [];
     if (!list.length) continue;
-    blocos.push(list.map(a => `${a.player} | alvo: ${a.coord} | ataque saindo: ${a.launch}`).join('\n'));
+    blocos.push(list.map(a => {
+      const launchT = lookupTroops(a.player, a.launch);
+      const launchStr = launchT ? ` | machado=${launchT.axe || 0}, CL=${launchT.light || 0}` : '';
+      const alvoInfo = targetIndex.get(a.coord);
+      const defStr = alvoInfo ? ` | defesa alvo (${alvoInfo.player}): ${fmtDefesa(alvoInfo.troops)}` : '';
+      return `${a.player} | alvo: ${a.coord}${defStr} | ataque saindo: ${a.launch}${launchStr}`;
+    }).join('\n'));
   }
   outputTextEl.value = blocos.join('\n\n');
   draw();

@@ -4,7 +4,7 @@ import time
 import urllib.parse
 import urllib.request
 from pathlib import Path
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 import pulp
 from fastapi import FastAPI
@@ -23,10 +23,36 @@ class Jogador(BaseModel):
     alcance: float = 12.0
 
 
+class AristoVillage(BaseModel):
+    x: int
+    y: int
+    spear: int = 0
+    sword: int = 0
+    axe: int = 0
+    archer: int = 0
+    scout: int = 0
+    light: int = 0
+    marcher: int = 0
+    heavy: int = 0
+    ram: int = 0
+    catapult: int = 0
+    knight: int = 0
+    snob: int = 0
+
+
 class DistribuirRequest(BaseModel):
     coordenadas: List[str]
     jogadores: List[Jogador]
     mundo: Optional[str] = "br136"
+    aristocracia: Optional[Dict[str, List[AristoVillage]]] = None
+    use_aristocracia: bool = False
+    min_axe: int = 4000
+    min_light: int = 2000
+    multi_ataque_por_aldeia: bool = False
+
+
+class AristocraciaUpload(BaseModel):
+    aristocracia: Dict[str, List[AristoVillage]]
 
 
 def parse_coord(s: str):
@@ -44,6 +70,8 @@ def dist(a, b):
 
 _WORLD_CACHE: dict = {}
 _WORLD_TTL = 3600  # 1h
+
+_ARISTO_STORE: dict = {"data": None, "updated_at": None}
 
 
 def _fetch_text(url: str) -> str:
@@ -82,6 +110,42 @@ def fetch_world(mundo: str):
     return villages
 
 
+@app.post("/aristocracia")
+def upload_aristocracia(payload: AristocraciaUpload):
+    data = {k.strip().lower(): v for k, v in payload.aristocracia.items()}
+    _ARISTO_STORE["data"] = data
+    _ARISTO_STORE["updated_at"] = time.time()
+    n_players = len(data)
+    n_villages = sum(len(v) for v in data.values())
+    return {"status": "ok", "n_players": n_players, "n_villages": n_villages}
+
+
+@app.get("/aristocracia/status")
+def aristocracia_status():
+    data = _ARISTO_STORE.get("data")
+    if not data:
+        return {"loaded": False}
+    return {
+        "loaded": True,
+        "n_players": len(data),
+        "n_villages": sum(len(v) for v in data.values()),
+        "updated_at": _ARISTO_STORE.get("updated_at"),
+    }
+
+
+@app.get("/aristocracia/data")
+def aristocracia_data():
+    data = _ARISTO_STORE.get("data") or {}
+    return {nome: [v.model_dump() for v in vlist] for nome, vlist in data.items()}
+
+
+@app.delete("/aristocracia")
+def clear_aristocracia():
+    _ARISTO_STORE["data"] = None
+    _ARISTO_STORE["updated_at"] = None
+    return {"status": "ok"}
+
+
 @app.post("/distribuir")
 def distribuir(req: DistribuirRequest):
     coords_uniq = list(dict.fromkeys(c.strip() for c in req.coordenadas if c.strip()))
@@ -100,26 +164,48 @@ def distribuir(req: DistribuirRequest):
     refs_auto: List[bool] = []
     mundo_data = None
     nao_encontrados: List[str] = []
+    aristo: Dict[str, List[AristoVillage]] = {}
+    if req.aristocracia:
+        aristo = {k.strip().lower(): v for k, v in req.aristocracia.items()}
+    elif req.use_aristocracia and _ARISTO_STORE.get("data"):
+        aristo = _ARISTO_STORE["data"]
 
     for j in req.jogadores:
         manual = parse_coords_multi(j.ref)
         if manual:
             launches.append(manual)
             refs_auto.append(False)
-        else:
-            if mundo_data is None:
-                try:
-                    mundo_data = fetch_world(req.mundo or "br136")
-                except Exception as e:
-                    return {"status": "erro", "mensagem": f"Falha ao baixar dados do mundo: {e}"}
-            vlist = mundo_data.get(j.nome.strip().lower())
-            if not vlist:
-                nao_encontrados.append(j.nome)
+            continue
+
+        key = j.nome.strip().lower()
+        if key in aristo:
+            filtradas = [
+                (v.x, v.y)
+                for v in aristo[key]
+                if v.axe >= req.min_axe or v.light >= req.min_light
+            ]
+            if not filtradas:
+                nao_encontrados.append(f"{j.nome} (nenhuma aldeia >= {req.min_axe} axe ou {req.min_light} CL na aristocracia)")
                 launches.append([])
                 refs_auto.append(True)
                 continue
-            launches.append(list(vlist))
+            launches.append(filtradas)
             refs_auto.append(True)
+            continue
+
+        if mundo_data is None:
+            try:
+                mundo_data = fetch_world(req.mundo or "br136")
+            except Exception as e:
+                return {"status": "erro", "mensagem": f"Falha ao baixar dados do mundo: {e}"}
+        vlist = mundo_data.get(key)
+        if not vlist:
+            nao_encontrados.append(j.nome)
+            launches.append([])
+            refs_auto.append(True)
+            continue
+        launches.append(list(vlist))
+        refs_auto.append(True)
 
     if nao_encontrados:
         return {
@@ -155,58 +241,76 @@ def distribuir(req: DistribuirRequest):
     ]
     reachable = [[dists[v][p] <= alcances[p] for p in range(k)] for v in range(n)]
 
+    limite_atk_por_aldeia = 2 if req.multi_ataque_por_aldeia else 1
+
     capacidade_real = [sum(1 for v in range(n) if reachable[v][p]) for p in range(k)]
-    jogadores_saturados_pre = [
-        {"nome": nomes[p], "qtd_pedida": qtds[p], "max_alcancavel": capacidade_real[p]}
-        for p in range(k)
-        if capacidade_real[p] < qtds[p]
-    ]
+    jogadores_saturados_pre = []
+    for p in range(k):
+        if capacidade_real[p] < qtds[p]:
+            jogadores_saturados_pre.append(
+                {"nome": nomes[p], "qtd_pedida": qtds[p], "max_alcancavel": capacidade_real[p], "motivo": "alvos no alcance"}
+            )
+        elif len(launches[p]) * limite_atk_por_aldeia < qtds[p]:
+            jogadores_saturados_pre.append(
+                {"nome": nomes[p], "qtd_pedida": qtds[p], "max_alcancavel": len(launches[p]) * limite_atk_por_aldeia, "motivo": "aldeias de ataque disponiveis"}
+            )
     if jogadores_saturados_pre:
         return {
             "status": "infeasible",
-            "mensagem": "Algum jogador nao tem aldeias suficientes no alcance.",
+            "mensagem": "Algum jogador nao tem recursos suficientes (alvos ou aldeias de ataque).",
             "aldeias_sem_cobertura": [],
             "jogadores_saturados": jogadores_saturados_pre,
         }
 
-    prob = pulp.LpProblem("distribuicao", pulp.LpMinimize)
-    x = {}
+    # Constroi arestas (v, p, li, d) — uma por par alcancavel
+    edges = []
     for v in range(n):
         for p in range(k):
-            if reachable[v][p]:
-                x[(v, p)] = pulp.LpVariable(f"x_{v}_{p}", cat="Binary")
+            for li, lv in enumerate(launches[p]):
+                d = dist(coords[v], lv)
+                if d <= alcances[p]:
+                    edges.append((v, p, li, d))
 
-    prob += pulp.lpSum(x[(v, p)] * dists[v][p] for (v, p) in x)
+    by_v: List[list] = [[] for _ in range(n)]
+    by_p: List[list] = [[] for _ in range(k)]
+    by_pli: dict = {}
+    for (v, p, li, d) in edges:
+        by_v[v].append((p, li, d))
+        by_p[p].append((v, li, d))
+        by_pli.setdefault((p, li), []).append(v)
+
+    prob = pulp.LpProblem("distribuicao", pulp.LpMinimize)
+    y = {(v, p, li): pulp.LpVariable(f"y_{v}_{p}_{li}", cat="Binary") for (v, p, li, _) in edges}
+
+    prob += pulp.lpSum(y[(v, p, li)] * d for (v, p, li, d) in edges)
 
     for v in range(n):
-        vars_v = [x[(v, p)] for p in range(k) if (v, p) in x]
-        if vars_v:
-            prob += pulp.lpSum(vars_v) <= 1
+        if by_v[v]:
+            prob += pulp.lpSum(y[(v, p, li)] for (p, li, _) in by_v[v]) <= 1
 
     for p in range(k):
-        prob += pulp.lpSum(x[(v, p)] for v in range(n) if (v, p) in x) == qtds[p]
+        prob += pulp.lpSum(y[(v, p, li)] for (v, li, _) in by_p[p]) == qtds[p]
+
+    for (p, li), vs in by_pli.items():
+        prob += pulp.lpSum(y[(v, p, li)] for v in vs) <= limite_atk_por_aldeia
 
     status_code = prob.solve(pulp.PULP_CBC_CMD(msg=0))
     status_str = pulp.LpStatus[status_code]
 
     if status_str != "Optimal":
-        # Modelo relaxado pra diagnosticar: maximiza o que da pra atender,
-        # devolvendo quantas aldeias faltaram pra cada jogador.
         prob2 = pulp.LpProblem("diag", pulp.LpMinimize)
-        x2 = {}
-        for (v, p) in x:
-            x2[(v, p)] = pulp.LpVariable(f"d_{v}_{p}", cat="Binary")
+        y2 = {kk: pulp.LpVariable(f"d_{kk[0]}_{kk[1]}_{kk[2]}", cat="Binary") for kk in y}
         s = {p: pulp.LpVariable(f"s_{p}", lowBound=0, cat="Integer") for p in range(k)}
         prob2 += pulp.lpSum(s[p] for p in range(k))
         for v in range(n):
-            vars_v = [x2[(v, p)] for p in range(k) if (v, p) in x2]
-            if vars_v:
-                prob2 += pulp.lpSum(vars_v) <= 1
+            if by_v[v]:
+                prob2 += pulp.lpSum(y2[(v, p, li)] for (p, li, _) in by_v[v]) <= 1
         for p in range(k):
             prob2 += (
-                pulp.lpSum(x2[(v, p)] for v in range(n) if (v, p) in x2) + s[p]
-                == qtds[p]
+                pulp.lpSum(y2[(v, p, li)] for (v, li, _) in by_p[p]) + s[p] == qtds[p]
             )
+        for (p, li), vs in by_pli.items():
+            prob2 += pulp.lpSum(y2[(v, p, li)] for v in vs) <= limite_atk_por_aldeia
         prob2.solve(pulp.PULP_CBC_CMD(msg=0))
 
         jogadores_saturados = []
@@ -224,32 +328,30 @@ def distribuir(req: DistribuirRequest):
                 )
         return {
             "status": "infeasible",
-            "mensagem": "Conflito entre jogadores: alguns disputam o mesmo bolsao de aldeias e nao da pra atender todos.",
+            "mensagem": "Conflito: nao da pra atender todos respeitando 1 aldeia de ataque por alvo.",
             "aldeias_sem_cobertura": [],
             "jogadores_saturados": jogadores_saturados,
         }
 
     atribuicoes = []
     atribuidas = set()
-    for v in range(n):
-        for p in range(k):
-            if (v, p) in x and pulp.value(x[(v, p)]) > 0.5:
-                launch_v = min(launches[p], key=lambda lv: dist(coords[v], lv))
-                atribuicoes.append(
-                    {
-                        "coord": f"{coords[v][0]}|{coords[v][1]}",
-                        "x": coords[v][0],
-                        "y": coords[v][1],
-                        "player": nomes[p],
-                        "player_idx": p,
-                        "dist": round(dists[v][p], 2),
-                        "launch": f"{launch_v[0]}|{launch_v[1]}",
-                        "launch_x": launch_v[0],
-                        "launch_y": launch_v[1],
-                    }
-                )
-                atribuidas.add(v)
-                break
+    for (v, p, li, d) in edges:
+        if pulp.value(y[(v, p, li)]) > 0.5:
+            lv = launches[p][li]
+            atribuicoes.append(
+                {
+                    "coord": f"{coords[v][0]}|{coords[v][1]}",
+                    "x": coords[v][0],
+                    "y": coords[v][1],
+                    "player": nomes[p],
+                    "player_idx": p,
+                    "dist": round(d, 2),
+                    "launch": f"{lv[0]}|{lv[1]}",
+                    "launch_x": lv[0],
+                    "launch_y": lv[1],
+                }
+            )
+            atribuidas.add(v)
 
     nao_atribuidas = [
         {"coord": f"{coords[v][0]}|{coords[v][1]}", "x": coords[v][0], "y": coords[v][1]}
